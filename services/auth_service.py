@@ -18,7 +18,6 @@ class AuthService:
         cred = UserCredentials.query.filter_by(user_id=user.id).first()
         if cred and verify_password(cred.password_hash, password):
             return user
-        # fallback to legacy column
         if user.password and verify_password(user.password, password):
             return user
         return None
