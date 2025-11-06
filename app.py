@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from marshmallow import ValidationError
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -33,6 +34,10 @@ def inject_categorias():
     except Exception:
         categorias = []
     return dict(categorias=categorias)
+
+@app.errorhandler(ValidationError)
+def handle_marshmallow_validation(err):
+    return jsonify({"msg": "validation_error", "errors": err.messages}), 400
 
 #VISTAS WEB 
 

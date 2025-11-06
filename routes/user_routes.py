@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify
 from flask.views import MethodView
+from schemas.schemas import RolePatchSchema
 from repositories.user_repository import UserRepository
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from decorators.roles_decorator import roles_required
+from marshmallow import ValidationError
 
 user_bp = Blueprint("user", __name__)
 user_repo = UserRepository()
@@ -27,10 +29,13 @@ class UserDetailAPI(MethodView):
     @jwt_required()
     @roles_required("admin")
     def patch(self, user_id):
-        data = request.get_json() or {}
-        new_role = data.get("role")
-        if new_role not in ("user","moderator","admin"):
-            return jsonify({"msg":"role inválido"}), 400
+        schema = RolePatchSchema()
+        try:
+            data = schema.load(request.get_json(silent=True) or {})
+        except ValidationError as e:
+            return jsonify({"msg":"validation_error","errors": e.messages}), 400
+
+        new_role = data["role"]
         user_repo.update_role(user_id, new_role)
         return jsonify({"msg":"role actualizado"}), 200
 

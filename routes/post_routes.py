@@ -2,8 +2,10 @@ from flask import Blueprint, request, jsonify
 from flask.views import MethodView
 from services.post_service import PostService
 from models.models import Post
+from schemas.schemas import PostSchema, PostUpdateSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from repositories.user_repository import UserRepository
+from marshmallow import ValidationError
 
 post_bp = Blueprint("post", __name__)
 post_service = PostService()
@@ -22,13 +24,16 @@ class PostsAPI(MethodView):
 
     @jwt_required()
     def post(self):
-        data = request.get_json() or {}
-        titulo = data.get("titulo")
-        contenido = data.get("contenido")
-        categoria_id = data.get("categoria_id", 1)
+        schema = PostSchema()
+        try:
+            data = schema.load(request.get_json(silent=True) or {})
+        except ValidationError as e:
+            return jsonify({"msg":"validation_error","errors": e.messages}), 400
+
+        titulo = data["titulo"]
+        contenido = data["contenido"]
+        categoria_id = data["categoria_id"]
         user_id = get_jwt_identity()
-        if not titulo or not contenido:
-            return jsonify({"msg":"faltan campos"}), 400
         p = post_service.create_post(titulo, contenido, user_id, categoria_id)
         return jsonify({"msg":"post creado","post_id": p.id}), 201
 
@@ -49,8 +54,15 @@ class PostDetailAPI(MethodView):
         claims = get_jwt()
         user_repo = UserRepository()
         requester = user_repo.get_by_id(claims.get("user_id"))
+
+        schema = PostUpdateSchema()
         try:
-            post_service.update_post(post, request.get_json() or {}, requester)
+            data = schema.load(request.get_json(silent=True) or {})
+        except ValidationError as e:
+            return jsonify({"msg":"validation_error","errors": e.messages}), 400
+
+        try:
+            post_service.update_post(post, data, requester)
         except PermissionError:
             return jsonify({"msg":"No autorizado"}), 403
         return jsonify({"msg":"post actualizado"}), 200

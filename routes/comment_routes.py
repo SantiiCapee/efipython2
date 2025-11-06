@@ -2,8 +2,10 @@ from flask import Blueprint, request, jsonify
 from flask.views import MethodView
 from services.comment_service import CommentService
 from models.models import Comentario, Post
+from schemas.schemas import CommentSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from repositories.user_repository import UserRepository
+from marshmallow import ValidationError
 
 comment_bp = Blueprint("comment", __name__)
 comment_service = CommentService()
@@ -17,10 +19,13 @@ class PostCommentsAPI(MethodView):
     @jwt_required()
     def post(self, post_id):
         Post.query.get_or_404(post_id)
-        data = request.get_json() or {}
-        texto = data.get("texto")
-        if not texto:
-            return jsonify({"msg":"texto requerido"}), 400
+        schema = CommentSchema()
+        try:
+            data = schema.load(request.get_json(silent=True) or {})
+        except ValidationError as e:
+            return jsonify({"msg":"validation_error","errors": e.messages}), 400
+
+        texto = data["texto"]
         c = comment_service.create_comment(texto, get_jwt_identity(), post_id)
         return jsonify({"msg":"comentario creado","id": c.id}), 201
 

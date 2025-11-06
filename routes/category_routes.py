@@ -2,8 +2,10 @@ from flask import Blueprint, request, jsonify
 from flask.views import MethodView
 from services.category_service import CategoryService
 from models.models import Categoria
+from schemas.schemas import CategorySchema
 from flask_jwt_extended import jwt_required
 from decorators.roles_decorator import roles_required
+from marshmallow import ValidationError
 
 category_bp = Blueprint("category", __name__)
 category_service = CategoryService()
@@ -16,10 +18,13 @@ class CategoryListAPI(MethodView):
     @jwt_required()
     @roles_required("moderator", "admin")
     def post(self):
-        data = request.get_json() or {}
-        nombre = data.get("nombre")
-        if not nombre:
-            return jsonify({"msg":"nombre requerido"}), 400
+        schema = CategorySchema()
+        try:
+            data = schema.load(request.get_json(silent=True) or {})
+        except ValidationError as e:
+            return jsonify({"msg":"validation_error","errors": e.messages}), 400
+
+        nombre = data["nombre"]
         c = category_service.create(nombre)
         return jsonify({"msg":"categoria creada","id":c.id}), 201
 
@@ -28,9 +33,13 @@ class CategoryDetailAPI(MethodView):
     @roles_required("moderator", "admin")
     def put(self, category_id):
         cat = Categoria.query.get_or_404(category_id)
-        nombre = (request.get_json() or {}).get("nombre")
-        if not nombre:
-            return jsonify({"msg":"nombre requerido"}), 400
+        schema = CategorySchema()
+        try:
+            data = schema.load(request.get_json(silent=True) or {})
+        except ValidationError as e:
+            return jsonify({"msg":"validation_error","errors": e.messages}), 400
+
+        nombre = data["nombre"]
         category_service.update(cat, nombre)
         return jsonify({"msg":"categoria actualizada"}), 200
 
