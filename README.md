@@ -221,12 +221,6 @@ efipython2/
 - Marshmallow  
 - PyMySQL  
 
----
-
-## 💬 Autor
-
-**Santiago Capellino**  
-Proyecto EFI - Programación Avanzada en Python
 
 ---
 
