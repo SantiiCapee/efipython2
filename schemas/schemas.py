@@ -37,3 +37,7 @@ class CategorySchema(Schema):
 
 class RolePatchSchema(Schema):
     role = fields.Str(required=True, validate=validate.OneOf(["user","moderator","admin"]))
+
+class UserUpdateSchema(Schema):
+    role = fields.Str(validate=validate.OneOf(["user","moderator","admin"]))
+    is_active = fields.Boolean()

@@ -36,3 +36,13 @@ class UserRepository:
         user.is_active = False
         db.session.commit()
         return user
+    
+    @staticmethod
+    def update_user(user_id, role=None, is_active=None):
+        user = Usuario.query.get_or_404(user_id)
+        if role:
+            user.role = role
+        if is_active is not None:
+            user.is_active = is_active
+        db.session.commit()
+        return user
