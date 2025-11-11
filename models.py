@@ -6,12 +6,10 @@ class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    # Nota: no guardamos password aquí, lo guardamos en UserCredential.password_hash
     role = db.Column(db.String(20), nullable=False, default="user")
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relationship hacia credenciales (singular)
     credentials = db.relationship(
         "UserCredential",
         back_populates="user",

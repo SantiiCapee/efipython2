@@ -27,7 +27,14 @@ class PostSchema(Schema):
     author = fields.Method("get_author", dump_only=True)
 
     def get_author(self, post):
-        # post.usuario es la relación hacia Usuario definida en models.py
         return post.usuario.nombre if post.usuario else None
 
 
+class ComentarioSchema(Schema):
+    id = fields.Int(dump_only=True)
+    texto = fields.Str(required=True)
+    usuario_id = fields.Int(dump_only=True)
+    post_id = fields.Int(required=True)
+    fecha_creacion = fields.DateTime(dump_only=True)
+    usuario = fields.Nested(UserSchema, only=("id", "nombre"))
+    post = fields.Nested(PostSchema, only=("id", "titulo"))
